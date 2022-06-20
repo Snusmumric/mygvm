@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -36,12 +37,58 @@ func printHelp() {
 	os.Exit(0)
 }
 
+const (
+	TarInstallation = "tar"
+)
+
+var AllInstallationSources = []string{TarInstallation}
+
+type Installation struct {
+	Installer goInstaller
+}
+
 type ScriptParams struct {
 	Command   string
 	GoVersion string
+	NextArg   int
+
+	InstallParams *Installation
 }
 
-var Debug = flag.Bool("debug", false, "run script in debug mode")
+func (s *ScriptParams) NextScriptArg() string {
+	r := flag.Arg(s.NextArg)
+	s.NextArg++
+	return r
+}
+
+func (s *ScriptParams) FullfillInstallParams() {
+	if *InstallationSource == "" {
+		log.Fatalf("installation source doesn't chosen, use '--'src' flag")
+	}
+	switch *InstallationSource {
+	case TarInstallation:
+		tarArchivePath := s.NextScriptArg()
+		s.InstallParams = &Installation{}
+		var err error
+		s.InstallParams.Installer, err = NewTarInstaller(tarArchivePath)
+		if err != nil {
+			log.Fatalf("Failed to setup tar installation %s", err)
+		}
+	default:
+		log.Fatalf(
+			"Unknown installation source: %v; only %s supported",
+			*InstallationSource,
+			strings.Join(AllInstallationSources, ", "),
+		)
+	}
+}
+
+var (
+	Debug = flag.Bool("debug", false, "run script in debug mode")
+
+	// Installation
+	InstallationSource = flag.String("src", "", "source of go code")
+)
 
 func getScriptParams() ScriptParams {
 	flag.Parse()
@@ -52,6 +99,7 @@ func getScriptParams() ScriptParams {
 	c := ScriptParams{
 		Command:   flag.Arg(0),
 		GoVersion: flag.Arg(1),
+		NextArg:   2,
 	}
 	valid := true
 	if c.Command == "" {
@@ -74,6 +122,8 @@ func main() {
 	case "show":
 		commandShow()
 	case "install":
+		c.FullfillInstallParams()
+		cmdInstall(c.GoVersion, c.InstallParams.Installer)
 	case "help":
 		printHelp()
 	default:

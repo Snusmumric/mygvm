@@ -39,6 +39,22 @@ type goData struct {
 	isCurrent bool
 }
 
+func (d *goData) VersionPath() string {
+	return path.Join(VersionDir, d.version)
+}
+
+func (d *goData) GobinPath() string {
+	return path.Join(d.VersionPath(), gobinBase)
+}
+
+func (d *goData) GopathPath() string {
+	return path.Join(d.VersionPath(), gopathBase)
+}
+
+func (d *goData) BinaryPath() string {
+	return path.Join(d.GobinPath(), "bin", "go")
+}
+
 func (d *goData) ValidateVersion(version string) error {
 	matchedIdxs := versionRE.FindAllStringIndex(version, -1)
 	if len(matchedIdxs) != 1 {
