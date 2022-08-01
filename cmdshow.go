@@ -52,7 +52,7 @@ func (s showList) String() string {
 	return b.String()
 }
 
-func commandShow() {
+func readBinDir() showList {
 	currentGo := checkConsistency()
 
 	goBin, err := os.Open(VersionDir)
@@ -89,5 +89,9 @@ func commandShow() {
 	}
 
 	sort.Sort(showL)
-	fmt.Println(showL)
+	return showL
+}
+
+func commandShow() {
+	fmt.Println(readBinDir())
 }

@@ -19,12 +19,12 @@ import (
 
 var (
 	HomeDir       = os.Getenv("HOME")
-	GopathSymlink = path.Join(HomeDir, "go")
-	GobinSymlink  = path.Join(HomeDir, "gobin")
-	GoBinaryDir   = path.Join(GobinSymlink, "bin")
-	GoBinaryPath  = path.Join(GoBinaryDir, "go")
+	GopathSymlink = path.Join(HomeDir, "go")       // HOME/go
+	GobinSymlink  = path.Join(HomeDir, "gobin")    // HOME/gobin
+	GoBinaryDir   = path.Join(GobinSymlink, "bin") // HOME/gobin/bin
+	GoBinaryPath  = path.Join(GoBinaryDir, "go")   // HOME/gobin/bin/go
 
-	VersionDir = path.Join(HomeDir, "gover")
+	VersionDir = path.Join(HomeDir, "gover") // HOME/gover
 	versionRE  = regexp.MustCompile(`^go([1-9.]+)$`)
 	gopathBase = "gopath"
 	gobinBase  = "go"
@@ -37,6 +37,22 @@ type goData struct {
 	patch   uint64
 
 	isCurrent bool
+}
+
+func (d *goData) VersionPath() string { // HOME/gover/goVersion
+	return path.Join(VersionDir, d.version)
+}
+
+func (d *goData) GobinPath() string {
+	return path.Join(d.VersionPath(), gobinBase) // HOME/gover/goVersion/go
+}
+
+func (d *goData) GopathPath() string {
+	return path.Join(d.VersionPath(), gopathBase) // HOME/gover/goVersion/gopath
+}
+
+func (d *goData) BinaryPath() string {
+	return path.Join(d.GobinPath(), "bin", "go")
 }
 
 func (d *goData) ValidateVersion(version string) error {
